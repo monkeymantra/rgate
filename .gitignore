@@ -2,3 +2,6 @@ __pycache__*
 .idea*
 venv*
 .example.db
+bin*
+lib*
+pyvenv.cfg

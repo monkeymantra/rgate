@@ -6,7 +6,6 @@ from models import *
 from requests import request as make_request
 import requests
 
-
 class RGate:
     def __init__(self, port: int, config_path: str):
         self.port = port
@@ -23,7 +22,7 @@ class RGate:
         return default_response
 
     def run(self):
-        self.rgate.run(port=8080, debug=True)
+        self.rgate.run(port=self.port, debug=True)
 
     def _add_routes(self):
         # Add routes dynamically to Flask
@@ -53,7 +52,17 @@ class RGate:
 
 
 if __name__ == "__main__":
-    rgate = RGate(80, "./cfg.yaml")
+    import argparse
+
+    parser = argparse.ArgumentParser(description='RGate API Gateway')
+    parser.add_argument('--port', type=int, default=8080,
+                        help='Port to expose')
+    parser.add_argument('--config', type=str, default="./cfg.yaml",
+                        help='Path to config yaml')
+
+
+    args = parser.parse_args()
+    rgate = RGate(args.port, args.config)
     rgate.run()
 
 
