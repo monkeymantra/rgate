@@ -61,7 +61,6 @@ if __name__ == "__main__":
     parser.add_argument('--config', type=str, default="./cfg.yaml",
                         help='Path to config yaml')
 
-
     args = parser.parse_args()
     rgate = RGate(args.port, args.config)
     rgate.run_app()

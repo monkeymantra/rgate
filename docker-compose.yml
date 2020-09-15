@@ -8,7 +8,6 @@ services:
       labels:
         - "env=production"
         - "app_name=payment"
-        - "app=rgate"
     ports:
       - 8081:80
   orders:
@@ -21,4 +20,3 @@ services:
       labels:
         - "env=production"
         - "app_name=orders"
-        - "app=rgate"
