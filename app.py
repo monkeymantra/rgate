@@ -4,6 +4,7 @@ from config import Config
 from docker_manager import DockerManager
 from models import *
 from requests import request as make_request
+import requests
 
 
 class RGate:
@@ -36,15 +37,18 @@ class RGate:
 
     def _backend_func(self, route: Route):
         container = self.docker.find_container(route.backend)
-        port = container.ports.get("80/tcp")[0]["HostPort"]  # Keep this simple as a default
+        port = int(container.ports.get("80/tcp")[0]["HostPort"])  # Keep this simple as a default
         url = "http://localhost:{}{}".format(port, route.path_prefix)
 
         def backend_func(path=None):
-            resp = make_request(request.method, url, params=request.args, data=request.data)
-            excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
-            headers = [(name, value) for (name, value) in resp.raw.headers.items() if
-                       name.lower() not in excluded_headers]
-            return Response(resp.content, resp.status_code, headers)
+            try:
+                resp = make_request(request.method, url, params=request.args, data=request.data)
+                excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+                headers = [(name, value) for (name, value) in resp.raw.headers.items() if
+                           name.lower() not in excluded_headers]
+                return Response(resp.content, resp.status_code, headers)
+            except requests.ConnectionError:
+                return Response("Backend down", 503)
         return backend_func
 
 
