@@ -1,0 +1,24 @@
+version: '3.8'
+services:
+  payment:
+    container_name: payment
+    hostname: payment
+    build:
+      context: .
+      labels:
+        - "env=production"
+        - "app_name=payment"
+        - "app=rgate"
+    ports:
+      - 8081:80
+  orders:
+    container_name: orders
+    hostname: payment
+    ports:
+      - 8082:80
+    build:
+      context: .
+      labels:
+        - "env=production"
+        - "app_name=orders"
+        - "app=rgate"
