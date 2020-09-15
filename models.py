@@ -15,6 +15,7 @@ class MatchLabel:
 
 class Backend:
     def __init__(self, name: str, match_labels: List[MatchLabel]):
+        # Unclear whether match labels need to allow for duplicates; python docker sees them as a dict, not a list
         self.name = name
         self.match_labels = match_labels
 

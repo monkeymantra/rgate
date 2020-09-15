@@ -1,15 +1,15 @@
 from flask import Flask, request
 from flask import Response
-from config import Config
+from config import Config, YamlConfig
 from docker_manager import DockerManager
 from models import *
 from requests import request as make_request
 import requests
 
 class RGate:
-    def __init__(self, port: int, config_path: str):
+    def __init__(self, port: int, config: Config):
         self.port = port
-        self.config = Config(config_path)
+        self.config = config
         self.docker = DockerManager()
         self.rgate = Flask("rgate")
         self.rgate.register_error_handler(404, self.error_handler())
@@ -21,13 +21,13 @@ class RGate:
             return Response(self.config.default_response.body, self.config.default_response.status_code)
         return default_response
 
-    def run_app(self):
-        self.rgate.run(port=self.port, debug=True)
+    def run_app(self, debug=False):
+        self.rgate.run(port=self.port, debug=debug)
 
     def _add_routes(self):
         # Add routes dynamically to Flask
         print("Adding backends")
-        for route in self.config.routes:
+        for route in self.config.routes.values():
             print("Adding route {}".format(route))
             self.rgate.add_url_rule(route.path_prefix,
                                     route.path_prefix.replace("/", "_"),  # Make sure name is legal
@@ -62,7 +62,8 @@ if __name__ == "__main__":
                         help='Path to config yaml')
 
     args = parser.parse_args()
-    rgate = RGate(args.port, args.config)
+    config = YamlConfig(args.config)
+    rgate = RGate(args.port, config)
     rgate.run_app()
 
 

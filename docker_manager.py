@@ -14,6 +14,8 @@ class DockerManager:
                 raise BackendResolutionError("Multiple containers matched filters")
             else:
                 return containers[0]
+        else:
+            raise BackendResolutionError("No containers found for backend")
 
 
 class BackendResolutionError(Exception):

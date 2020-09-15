@@ -7,38 +7,33 @@ class ConfigException(Exception):
 
 
 class Config:
-
-    def __init__(self, path: str):
-        self.routes = {}
-        self._backends = {}
-        self.default_response = DefaultResponse("No default defined", 500)
-        with open(path, "r") as config_file:
-            config_dict = yaml.safe_load(config_file)
-            # This is prettier in scala, sorry
-            self._backends = dict(map(lambda backend: (backend.name, backend), map(Config.parse_backend, config_dict['backends'])))
-            self.routes = [self.parse_route(route) for route in config_dict['routes']]
-            self.default_response = DefaultResponse(config_dict['default_response']['body'], config_dict['default_response']['status_code'])
-        return
+    def __init__(self, config_dict: dict):
+        """Main config object"""
+        self.backends = dict((backend.name, backend) for backend in
+                        (Config.parse_backend(backend_dict) for backend_dict in config_dict['backends']))
+        self.routes = dict((route.path_prefix, route) for route in
+                           (self.parse_route(route_dict, self.backends) for route_dict in config_dict['routes']))
+        self.default_response = DefaultResponse(config_dict['default_response']['body'],
+                                                config_dict['default_response']['status_code'])
 
     @staticmethod
     def parse_backend(backend: dict) -> Backend:
         return Backend(name=backend['name'], match_labels=[MatchLabel(label) for label in backend['match_labels']])
 
-    def parse_route(self, route: dict) -> Route:
+    def parse_route(self, route: dict, backends: dict) -> Route:
         backend_name = route['backend']
         path_prefix = route['path_prefix']
-        if backend_name not in self._backends:
+        if backend_name not in backends:
             raise ConfigException("{} mapped to invalid backend {}".format(path_prefix, backend_name))
 
-        return Route(path_prefix=route['path_prefix'], backend=self._backends[backend_name])
+        return Route(path_prefix=route['path_prefix'], backend=backends[backend_name])
 
 
+class YamlConfig(Config):
+    def __init__(self, path: str):
+        super().__init__(self._config_dict(path))
 
-
-if __name__ == "__main__":
-
-    ml = MatchLabel("key1=value1")
-    print(ml)
-    cfg = Config("./cfg.yaml")
-    for route in cfg.routes:
-        print(route)
+    def _config_dict(self, path):
+        with open(path, "r") as config_file:
+            config_dict = yaml.safe_load(config_file)
+            return config_dict
