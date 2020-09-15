@@ -1,5 +1,5 @@
 routes:
-  - path_prefix: /api/payment
+  - path_prefix: /api/payments
     backend: payment
   - path_prefix: /api/orders
     backend: orders

@@ -13,7 +13,7 @@ services:
       - 8081:80
   orders:
     container_name: orders
-    hostname: payment
+    hostname: orders
     ports:
       - 8082:80
     build:

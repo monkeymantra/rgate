@@ -12,8 +12,8 @@ class RGate:
         self.config = Config(config_path)
         self.docker = DockerManager()
         self.rgate = Flask("rgate")
-        self._add_routes()
         self.rgate.register_error_handler(404, self.error_handler())
+        self._add_routes()
 
     def error_handler(self):
         @self.rgate.errorhandler(404)
@@ -21,7 +21,7 @@ class RGate:
             return Response(self.config.default_response.body, self.config.default_response.status_code)
         return default_response
 
-    def run(self):
+    def run_app(self):
         self.rgate.run(port=self.port, debug=True)
 
     def _add_routes(self):
@@ -29,14 +29,14 @@ class RGate:
         print("Adding backends")
         for route in self.config.routes:
             print("Adding route {}".format(route))
-            self.rgate.add_url_rule(route.path_prefix + "<path:path>",  # Handle wildcard after prefix
+            self.rgate.add_url_rule(route.path_prefix,  # Handle wildcard after prefix
                                     route.path_prefix.replace("/", "_"),  # Make sure name is legal
                                     self._backend_func(route),
                                     methods=['POST',  'PUT',  'GET', 'DELETE'])  # This is enough for a demo.
 
     def _backend_func(self, route: Route):
         container = self.docker.find_container(route.backend)
-        port = int(container.ports.get("80/tcp")[0]["HostPort"])  # Keep this simple as a default
+        port = container.ports.get("80/tcp")[0]["HostPort"]  # Keep this simple as a default
         url = "http://localhost:{}{}".format(port, route.path_prefix)
 
         def backend_func(path=None):
@@ -63,8 +63,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     rgate = RGate(args.port, args.config)
-    rgate.run()
-
+    rgate.run_app()
 
 
 
