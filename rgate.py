@@ -29,10 +29,14 @@ class RGate:
         print("Adding backends")
         for route in self.config.routes:
             print("Adding route {}".format(route))
-            self.rgate.add_url_rule(route.path_prefix,  # Handle wildcard after prefix
+            self.rgate.add_url_rule(route.path_prefix,
                                     route.path_prefix.replace("/", "_"),  # Make sure name is legal
                                     self._backend_func(route),
-                                    methods=['POST',  'PUT',  'GET', 'DELETE'])  # This is enough for a demo.
+                                    methods=['POST', 'PUT', 'GET', 'DELETE'])
+            self.rgate.add_url_rule(route.path_prefix + "/<path:path>",  # Handle wildcard after prefix
+                                    route.path_prefix.replace("/", "_") + "extras",  # Make sure name is legal
+                                    self._backend_func(route),
+                                    methods=['POST', 'PUT', 'GET', 'DELETE'])
 
     def _backend_func(self, route: Route):
         container = self.docker.find_container(route.backend)
@@ -42,10 +46,7 @@ class RGate:
         def backend_func(path=None):
             try:
                 resp = make_request(request.method, url, params=request.args, data=request.data)
-                excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
-                headers = [(name, value) for (name, value) in resp.raw.headers.items() if
-                           name.lower() not in excluded_headers]
-                return Response(resp.content, resp.status_code, headers)
+                return Response(resp.content, resp.status_code)
             except requests.ConnectionError:
                 return Response("Backend down", 503)
         return backend_func
